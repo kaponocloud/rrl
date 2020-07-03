@@ -1,6 +1,6 @@
-module github.com/coredns/rrl
+module github.com/kaponocloud/rrl
 
-go 1.12
+go 1.14
 
 require (
 	github.com/caddyserver/caddy v1.0.1

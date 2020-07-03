@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coredns/rrl/plugins/rrl/cache"
+	"github.com/kaponocloud/rrl/plugins/rrl/cache"
 
 	"github.com/coredns/coredns/plugin/test"
 	"github.com/miekg/dns"
@@ -24,13 +24,13 @@ func TestDebit(t *testing.T) {
 	}
 	ra, _ := rrl.table.Get("token1")
 	bal := time.Now().UnixNano() - ra.(*ResponseAccount).allowTime
-	if bal < second - rrl.responsesInterval {
-		t.Errorf("expected balance not less than %v, got %v", second - rrl.responsesInterval, bal)
+	if bal < second-rrl.responsesInterval {
+		t.Errorf("expected balance not less than %v, got %v", second-rrl.responsesInterval, bal)
 	}
 
 	bal, err = rrl.debit(rrl.allowanceForRtype(rTypeResponse), "token1")
-	if bal > second - rrl.responsesInterval {
-		t.Errorf("expected balance of < %v, got %v", second - rrl.responsesInterval, bal)
+	if bal > second-rrl.responsesInterval {
+		t.Errorf("expected balance of < %v, got %v", second-rrl.responsesInterval, bal)
 	}
 
 	_, err = rrl.debit(rrl.allowanceForRtype(rTypeNxdomain), "token2")
@@ -39,7 +39,7 @@ func TestDebit(t *testing.T) {
 	}
 	time.Sleep(time.Second) // sleep 1 second, balance should max out
 	bal, err = rrl.debit(rrl.allowanceForRtype(rTypeNxdomain), "token2")
-	if bal != second - rrl.nxdomainsInterval {
+	if bal != second-rrl.nxdomainsInterval {
 		t.Errorf("expected balance of %v, got %v", rrl.window-rrl.nxdomainsInterval, bal)
 	}
 

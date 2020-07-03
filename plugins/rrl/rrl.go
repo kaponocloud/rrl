@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coredns/rrl/plugins/rrl/cache"
+	"github.com/kaponocloud/rrl/plugins/rrl/cache"
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/nonwriter"

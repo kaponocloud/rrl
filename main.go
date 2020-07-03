@@ -5,8 +5,7 @@ import (
 	_ "github.com/coredns/coredns/core/plugin"
 	"github.com/coredns/coredns/coremain"
 
-	_ "github.com/coredns/rrl/plugins/rrl"
-
+	_ "github.com/kaponocloud/rrl/plugins/rrl"
 )
 
 func init() {
