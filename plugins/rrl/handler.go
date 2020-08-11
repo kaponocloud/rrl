@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/coredns/coredns/plugin"
+	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/coredns/coredns/plugin/pkg/nonwriter"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
@@ -47,6 +48,7 @@ func (rrl *RRL) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 
 	// if the balance is negative, drop the response (don't write response to client)
 	if b < 0 && err == nil {
+		droppedCount.WithLabelValues(metrics.WithServer(ctx)).Add(1)
 		log.Debugf("dropped response to %v for \"%v\" %v (token='%v', balance=%.1f)", nw.RemoteAddr().String(), nw.Msg.Question[0].String(), dns.RcodeToString[nw.Msg.Rcode], t, float64(b)/float64(allowance))
 		// always return success, to prevent writing of error statuses to client
 		return dns.RcodeSuccess, nil

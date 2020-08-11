@@ -67,6 +67,14 @@ rrl [ZONES...] {
 * `make -f Makefile.release DOCKER=your-docker-repo docker`
 * `make -f Makefile.release DOCKER=your-docker-repo docker-push`
 
+## Metrics
+
+If monitoring is enabled (via the *prometheus* plugin) then the following metric is exported:
+
+* `coredns_rrl_dropped_total{server, type}` - counter of DNS requests being filtered.
+
+The `server, type` labels are explained in the *metrics* plugin documentation.
+
 ## Examples
 
 Example 1
