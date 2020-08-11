@@ -15,5 +15,5 @@ var (
 		Subsystem: subsystem,
 		Name:      "dropped_total",
 		Help:      "Counter of requests that was dropped.",
-	}, []string{"server", "type"})
+	}, []string{"server"})
 )
