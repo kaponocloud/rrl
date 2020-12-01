@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/caddyserver/caddy"
+	"github.com/coredns/caddy"
 )
 
 func TestSetupZones(t *testing.T) {
