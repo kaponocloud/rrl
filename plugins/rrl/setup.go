@@ -202,7 +202,7 @@ func rrlParse(c *caddy.Controller) (*RRL, error) {
 		// initialize table
 		rrl.initTable()
 
-		log.Debug(rrl)
+		log.Debugf("RRL config: %v", rrl)
 
 		return &rrl, nil
 	}
