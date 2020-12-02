@@ -18,6 +18,7 @@ func (rrl *RRL) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 
 	// only limit rates for applied zones
 	zone := plugin.Zones(rrl.Zones).Matches(state.Name())
+	log.Debugf("rrl ServeDNS for %v, zone=%v", state.IP(), zone)
 	if zone == "" {
 		return plugin.NextOrFailure(rrl.Name(), rrl.Next, ctx, w, r)
 	}
@@ -26,7 +27,8 @@ func (rrl *RRL) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 	if rrl.requestsInterval != 0 {
 		t := rrl.addrPrefix(state.RemoteAddr())
 		b, err := rrl.debit(rrl.requestsInterval, t)
-		log.Debugf("request from %v (allowance=%v, balance=%.1f)", state.IP(), rrl.requestsInterval, float64(b)/float64(rrl.requestsInterval))
+		log.Debugf("request from %v (requestsInterval=%d, balance=%.1f)",
+			state.IP(), rrl.requestsInterval, float64(b))
 		// if the balance is negative, drop the request (don't write response to client)
 		if b < 0 && err == nil {
 			log.Debugf("request rate exceeded from %v (token='%v', balance=%.1f)", state.IP(), t, float64(b)/float64(rrl.requestsInterval))
