@@ -7,13 +7,19 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+// Variables declared for monitoring.
 var (
-	subsystem = "rrl"
-	// droppedCount is counter of successfully filtered queries.
-	droppedCount = promauto.NewCounterVec(prometheus.CounterOpts{
+	RequestsExceeded = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: plugin.Namespace,
-		Subsystem: subsystem,
-		Name:      "dropped_total",
-		Help:      "Counter of requests that was dropped.",
-	}, []string{"server"})
+		Subsystem: "rrl",
+		Name:      "requests_exceeded_total",
+		Help:      "Counter of requests exceeding QPS limit.",
+	}, []string{"client_ip"})
+
+	ResponsesExceeded = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: plugin.Namespace,
+		Subsystem: "rrl",
+		Name:      "responses_exceeded_total",
+		Help:      "Counter of responses exceeding QPS limit.",
+	}, []string{"client_ip"})
 )

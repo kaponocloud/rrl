@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/coredns/coredns/plugin/pkg/nonwriter"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
@@ -17,14 +16,33 @@ func (rrl *RRL) Name() string { return "rrl" }
 func (rrl *RRL) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	state := request.Request{W: w, Req: r}
 
-	// immediately pass to next plugin if the request is over tcp
-	if state.Proto() == "tcp" {
+	// only limit rates for applied zones
+	zone := plugin.Zones(rrl.Zones).Matches(state.Name())
+	// log.Debugf("rrl ServeDNS for %v, zone=%v", state.IP(), zone)
+	if zone == "" {
 		return plugin.NextOrFailure(rrl.Name(), rrl.Next, ctx, w, r)
 	}
 
-	// immediately pass to next plugin if the request not in the rrl zones
-	zone := plugin.Zones(rrl.Zones).Matches(state.Name())
-	if zone == "" {
+	// Limit request rate
+	if rrl.requestsInterval != 0 {
+		t := rrl.addrPrefix(state.RemoteAddr())
+		b, err := rrl.debit(rrl.requestsInterval, t)
+		// log.Debugf("request from %v (requestsInterval=%d, balance=%.1f)",
+		// state.IP(), rrl.requestsInterval, float64(b))
+		// if the balance is negative, drop the request (don't write response to client)
+		if b < 0 && err == nil {
+			log.Debugf("request rate exceeded from %v (token='%v', balance=%.1f)", state.IP(), t, float64(b)/float64(rrl.requestsInterval))
+			RequestsExceeded.WithLabelValues(state.IP()).Add(1)
+			// always return success, to prevent writing of error statuses to client
+			if !rrl.reportOnly {
+				return dns.RcodeSuccess, nil
+			}
+		}
+	}
+
+	// Limit response rate
+	// dont limit responses rates for tcp requests
+	if state.Proto() == "tcp" {
 		return plugin.NextOrFailure(rrl.Name(), rrl.Next, ctx, w, r)
 	}
 
@@ -48,10 +66,12 @@ func (rrl *RRL) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) 
 
 	// if the balance is negative, drop the response (don't write response to client)
 	if b < 0 && err == nil {
-		droppedCount.WithLabelValues(metrics.WithServer(ctx)).Add(1)
-		log.Debugf("dropped response to %v for \"%v\" %v (token='%v', balance=%.1f)", nw.RemoteAddr().String(), nw.Msg.Question[0].String(), dns.RcodeToString[nw.Msg.Rcode], t, float64(b)/float64(allowance))
+		log.Debugf("response rate exceeded to %v for \"%v\" %v (token='%v', balance=%.1f)", nw.RemoteAddr().String(), nw.Msg.Question[0].String(), dns.RcodeToString[nw.Msg.Rcode], t, float64(b)/float64(allowance))
 		// always return success, to prevent writing of error statuses to client
-		return dns.RcodeSuccess, nil
+		ResponsesExceeded.WithLabelValues(state.IP()).Add(1)
+		if !rrl.reportOnly {
+			return dns.RcodeSuccess, nil
+		}
 	}
 
 	if err != nil {
